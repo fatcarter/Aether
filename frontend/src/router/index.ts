@@ -43,7 +43,7 @@ router.beforeEach(async (to, from, next) => {
 
     // 非管理端的模块检查
     if (!requiresAdmin) {
-      const moduleRedirect = await checkModuleAccess(to, moduleStore)
+      const moduleRedirect = await checkModuleAccess(to, moduleStore, authStore)
       if (moduleRedirect) return next(moduleRedirect)
     }
 

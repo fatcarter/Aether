@@ -15,6 +15,7 @@ import {
   Key,
   KeyRound,
   Layers,
+  LayoutGrid,
   Package,
   Puzzle,
   Send,
@@ -54,6 +55,7 @@ const moduleIconMap: Record<string, LucideIcon> = {
   SquareTerminal,
   CreditCard,
   Gift,
+  LayoutGrid,
 }
 
 function activeModuleItems(modules: ModuleRecord, group: string): NavItem[] {
@@ -89,6 +91,7 @@ export function buildNavigation(options: {
         title: t('nav.group.resources'),
         items: [
           { name: t('nav.modelCatalog'), href: '/dashboard/models', icon: Box },
+          ...(isModuleActive('model_plaza') ? [{ name: t('nav.modelPlaza'), href: '/dashboard/model-plaza', icon: LayoutGrid }] : []),
           { name: t('nav.apiKeys'), href: '/dashboard/api-keys', icon: Key },
           { name: t('nav.vscodex'), href: '/dashboard/vscodex', icon: SquareTerminal },
         ]

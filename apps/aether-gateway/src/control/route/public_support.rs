@@ -840,11 +840,20 @@ pub(super) fn classify_public_support_route(
             "public:capabilities",
             false,
         ))
-    } else if method == http::Method::GET && normalized_path == "/api/modules/auth-status" {
+    } else if method == http::Method::GET
+        && matches!(
+            normalized_path,
+            "/api/modules/auth-status" | "/api/modules/user-status"
+        )
+    {
+        let route_kind = match normalized_path {
+            "/api/modules/user-status" => "user_status",
+            _ => "auth_status",
+        };
         Some(classified(
             "public_support",
             "modules",
-            "auth_status",
+            route_kind,
             "public:modules",
             false,
         ))

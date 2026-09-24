@@ -194,6 +194,18 @@ pub(crate) const ADMIN_MODULE_DEFINITIONS: &[AdminModuleDefinition] = &[
         admin_menu_group: Some("management"),
         admin_menu_order: 75,
     },
+    AdminModuleDefinition {
+        name: "model_plaza",
+        display_name: "模型广场",
+        description: "以卡片形式集中展示当前可用模型的价格、性能指标与最近 24 小时可用性，管理员与普通用户均可查看，不暴露渠道信息",
+        category: "integration",
+        env_key: "MODEL_PLAZA_AVAILABLE",
+        default_available: true,
+        admin_route: Some("/dashboard/model-plaza"),
+        admin_menu_icon: Some("LayoutGrid"),
+        admin_menu_group: Some("overview"),
+        admin_menu_order: 81,
+    },
 ];
 
 #[derive(Debug, Clone, serde::Deserialize)]

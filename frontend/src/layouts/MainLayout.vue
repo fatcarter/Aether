@@ -1163,6 +1163,11 @@ onMounted(() => {
     void moduleStore.fetchModules().catch(() => {
       // 路由守卫会在需要模块状态时按需处理失败场景。
     })
+  } else if (!authStore.canAccessAdmin && !moduleStore.userLoaded) {
+    // 普通用户预加载用户可见模块状态，用于左侧菜单展示（如模型广场）。
+    void moduleStore.fetchUserModules().catch(() => {
+      // 加载失败时菜单项默认隐藏，不影响其他功能。
+    })
   }
   void loadRequiredAnnouncements()
 

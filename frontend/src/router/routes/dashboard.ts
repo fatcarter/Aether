@@ -64,6 +64,12 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         component: view(() => import('@/views/user/ModelCatalog.vue'))
       },
       {
+        path: 'model-plaza',
+        name: 'ModelPlaza',
+        component: view(() => import('@/views/user/ModelPlaza.vue')),
+        meta: { module: 'model_plaza' }
+      },
+      {
         path: 'vscodex',
         name: 'VscodeControl',
         component: view(() => import('@/views/user/VscodeControl.vue'))

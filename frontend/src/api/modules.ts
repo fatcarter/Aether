@@ -27,6 +27,12 @@ export interface AuthModuleInfo {
   active: boolean
 }
 
+/** 面向普通用户暴露的扩展模块启用状态（公开接口，无需管理员权限） */
+export interface UserModuleInfo {
+  name: string
+  active: boolean
+}
+
 export type ChatPiiRedactionTtlSeconds = 300 | 3600
 
 export interface ChatPiiRedactionRuleFeatures {
@@ -280,6 +286,17 @@ export const modulesApi = {
    */
   async getAuthModulesStatus(): Promise<AuthModuleInfo[]> {
     const response = await apiClient.get<AuthModuleInfo[]>('/api/modules/auth-status')
+    return response.data
+  },
+
+  /**
+   * 获取面向普通用户的扩展模块启用状态（公开接口）
+   *
+   * 普通用户无权访问 `/api/admin/modules/status`，此接口只返回 name + active，
+   * 供用户侧界面（如左侧菜单）判断是否展示对应模块入口。
+   */
+  async getUserModulesStatus(): Promise<UserModuleInfo[]> {
+    const response = await apiClient.get<UserModuleInfo[]>('/api/modules/user-status')
     return response.data
   },
 }

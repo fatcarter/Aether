@@ -1,5 +1,6 @@
 import type { RouteLocationNormalized } from 'vue-router'
 import type { useModuleStore } from '@/stores/modules'
+import type { useAuthStore } from '@/stores/auth'
 import { log } from '@/utils/logger'
 
 /**
@@ -8,7 +9,8 @@ import { log } from '@/utils/logger'
  */
 export async function checkModuleAccess(
   to: RouteLocationNormalized,
-  moduleStore: ReturnType<typeof useModuleStore>
+  moduleStore: ReturnType<typeof useModuleStore>,
+  authStore: ReturnType<typeof useAuthStore>
 ): Promise<string | null> {
   // 检查路由链中是否有模块要求
   const moduleName = to.matched.find(record => record.meta.module)?.meta.module as
@@ -18,10 +20,16 @@ export async function checkModuleAccess(
     return null
   }
 
-  // 确保模块状态已加载
-  if (!moduleStore.loaded) {
+  // 确保模块状态已加载。管理员使用完整状态接口，普通用户使用公开的用户模块接口。
+  const canAccessAdmin = authStore.canAccessAdmin
+  const needsFetch = canAccessAdmin ? !moduleStore.loaded : !moduleStore.userLoaded
+  if (needsFetch) {
     try {
-      await moduleStore.fetchModules()
+      if (canAccessAdmin) {
+        await moduleStore.fetchModules()
+      } else {
+        await moduleStore.fetchUserModules()
+      }
     } catch (error) {
       // fail-close: 获取模块状态失败时拒绝访问
       log.warn('Failed to fetch modules status, denying access', { error })

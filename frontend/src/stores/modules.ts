@@ -11,6 +11,12 @@ export const useModuleStore = defineStore('modules', () => {
   const error = ref<string | null>(null)
   let fetchModulesPromise: Promise<Record<string, ModuleStatus>> | null = null
 
+  // 普通用户侧模块启用状态：普通用户无权访问管理端模块状态接口，
+  // 通过公开接口 /api/modules/user-status 获取用户可见模块的 active 集合。
+  const userActiveModules = ref<Set<string>>(new Set())
+  const userLoaded = ref(false)
+  let fetchUserModulesPromise: Promise<Set<string>> | null = null
+
   /**
    * 获取所有模块状态
    */
@@ -40,6 +46,35 @@ export const useModuleStore = defineStore('modules', () => {
   }
 
   /**
+   * 获取普通用户可见的模块启用状态（公开接口）
+   *
+   * 供非管理员场景使用：管理员应使用 fetchModules 获取完整状态。
+   */
+  async function fetchUserModules() {
+    if (fetchUserModulesPromise) return fetchUserModulesPromise
+
+    fetchUserModulesPromise = (async () => {
+      try {
+        const items = await modulesApi.getUserModulesStatus()
+        const active = new Set<string>()
+        for (const item of items) {
+          if (item.active) active.add(item.name)
+        }
+        userActiveModules.value = active
+        userLoaded.value = true
+        return active
+      } catch (err: unknown) {
+        log.error('Failed to fetch user modules status', err)
+        throw err
+      } finally {
+        fetchUserModulesPromise = null
+      }
+    })()
+
+    return fetchUserModulesPromise
+  }
+
+  /**
    * 检查模块是否部署可用
    */
   function isAvailable(moduleName: string): boolean {
@@ -55,9 +90,12 @@ export const useModuleStore = defineStore('modules', () => {
 
   /**
    * 检查模块是否最终激活
+   *
+   * 优先使用管理端完整状态；管理端未加载时回退到普通用户侧的 active 集合，
+   * 使普通用户也能据此展示模块入口。
    */
   function isActive(moduleName: string): boolean {
-    return modules.value[moduleName]?.active ?? false
+    return modules.value[moduleName]?.active ?? userActiveModules.value.has(moduleName)
   }
 
   /**
@@ -110,7 +148,10 @@ export const useModuleStore = defineStore('modules', () => {
     loaded,
     loading,
     error,
+    userActiveModules,
+    userLoaded,
     fetchModules,
+    fetchUserModules,
     isAvailable,
     isEnabled,
     isActive,
