@@ -33,9 +33,13 @@ FROM ${RUST_BASE_IMAGE} AS gateway-base
 WORKDIR /build
 
 # 生产级 release 构建：保留 thin LTO，同时用 lld 缩短最终链接阶段。
+# CARGO_BUILD_JOBS 限制并行编译进程数：BuildKit 会把前端(node)与 Rust 两个 stage 并行调度,
+# 而 aether-gateway 是 67 万行的巨型 crate、opt-level=3 下多线程 codegen 峰值内存极高,
+# 不限并行时两边内存叠加会撑爆 colima VM(OOM)。仍 OOM 就调低,VM 内存宽裕可调高。
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse \
     CARGO_PROFILE_RELEASE_LTO=thin \
     CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16 \
+    CARGO_BUILD_JOBS=6 \
     RUSTFLAGS="-C linker=clang -C link-arg=-fuse-ld=lld"
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
@@ -52,6 +56,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     lld \
     pkg-config \
     perl
+
+# 将 crates.io 源替换为中科大镜像，加速依赖索引拉取与 crate 下载（sparse 协议）
+# 写入 gateway-base 的 $CARGO_HOME/config.toml，planner 与 builder 阶段均继承此配置
+RUN printf '%s\n' \
+    '[source.crates-io]' \
+    'replace-with = "ustc"' \
+    '' \
+    '[source.ustc]' \
+    'registry = "sparse+https://mirrors.ustc.edu.cn/crates.io-index/"' \
+    > /usr/local/cargo/config.toml
 
 RUN --mount=type=cache,id=aether-cargo-registry,target=/usr/local/cargo/registry,sharing=locked \
     --mount=type=cache,id=aether-cargo-git,target=/usr/local/cargo/git,sharing=locked \
